@@ -1,7 +1,15 @@
 #!/bin/sh
 
+# Ensure script fails on any error
 set -Eeo pipefail
-trap 'logError "Something went wrong!! Please check output above!!"' ERR
+trap 'echo "[ERROR] Something went wrong!! Please check output above!!" >&2' ERR
+
+# Check if the script is being piped
+if [ -t 0 ]; then
+    echo "This script should be run using curl:"
+    echo "curl -sSL https://raw.githubusercontent.com/thoughtworks-twu/setup-script/main/update_twu_script.sh | sh -s -- -dev"
+    exit 1
+fi
 
 JAVA_VERSION=17
 NODE_VERSION=18

@@ -70,16 +70,21 @@ installDockerCLIandCompose() {
 }
 
 saveStagingCert() {
-    logMessage "Saving Let's Encrypt staging certificate to ${CERT_FILE_LOCATION}..."
+    logMessage "Saving Let's Encrypt staging certificate to the system..."
 
-    # Create user-specific certificate directory if it doesn't exist
-    mkdir -p $CERT_FILE_FOLDER
+    # Create temporary directory for certificate
+    TEMP_CERT_DIR=$(mktemp -d)
+    TEMP_CERT_FILE="$TEMP_CERT_DIR/$CERT_FILE_NAME"
 
-    # Download the certificate
-    curl https://letsencrypt.org/certs/staging/$CERT_FILE_NAME --output $CERT_FILE_LOCATION
+    # Download the certificate to temporary location
+    curl https://letsencrypt.org/certs/staging/$CERT_FILE_NAME --output "$TEMP_CERT_FILE"
 
-    # Add the certificate to the user's keychain instead of system keychain
-    security add-trusted-cert -d -p ssl -r trustRoot -k ~/Library/Keychains/login.keychain-db $CERT_FILE_LOCATION
+    # Add to system keychain - this requires sudo
+    echo "Adding certificate to system keychain. You may be prompted for your password..."
+    sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain "$TEMP_CERT_FILE"
+
+    # Clean up temporary files
+    rm -rf "$TEMP_CERT_DIR"
     
     logOkMessage "Staging certificate installation complete."
 }

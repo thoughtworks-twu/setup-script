@@ -80,6 +80,12 @@ removeStagingCert() {
   logMessage "Removing Let's Encrypt staging certificate from ${CERT_FILE_LOCATION}...\nYou may be prompted for your password"
 
   if [ ! -f $CERT_FILE_LOCATION ]; then
+    # Create the $CERT_FILE_FOLDER if it doesn't exist
+    if [ ! -d $CERT_FILE_FOLDER ]; then
+      mkdir -p $CERT_FILE_FOLDER
+    fi
+    # Create the $CERT_FILE_LOCATION if it doesn't exist
+    touch $CERT_FILE_LOCATION
     curl https://letsencrypt.org/certs/staging/$CERT_FILE_NAME --output $CERT_FILE_LOCATION
   fi
 

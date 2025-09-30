@@ -3,7 +3,7 @@
 set -Eeo pipefail
 trap 'logError "Something went wrong!! Please check output above!!"' ERR
 
-JAVA_VERSION=24
+JAVA_VERSION=25
 NODE_VERSION=22
 CERT_FILE_NAME=letsencrypt-stg-root-x1.pem
 CERT_FILE_FOLDER=/usr/local/var
@@ -226,4 +226,3 @@ case $1 in
   logError "Unknown option '$1'"
   ;;
 esac
-

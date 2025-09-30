@@ -11,7 +11,7 @@ trap 'echo "[ERROR] Something went wrong!! Please check output above!!" >&2' ERR
 #     exit 1
 # fi
 
-JAVA_VERSION=24
+JAVA_VERSION=25
 NODE_VERSION=22
 CERT_FILE_NAME=letsencrypt-stg-root-x1.pem
 CERT_FILE_FOLDER=~/.local/share/certs

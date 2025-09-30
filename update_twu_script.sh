@@ -11,7 +11,7 @@ if [ -t 0 ]; then
   exit 1
 fi
 
-JAVA_VERSION=24
+JAVA_VERSION=25
 NODE_VERSION=22
 CERT_FILE_NAME=letsencrypt-stg-root-x1.pem
 CERT_FILE_FOLDER=~/.local/share/certs
@@ -239,4 +239,3 @@ case $1 in
   logError "Unknown option '$1'"
   ;;
 esac
-

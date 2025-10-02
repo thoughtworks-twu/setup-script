@@ -38,7 +38,7 @@ installGit() {
 installJava() {
   logMessage "Installing Java..."
   brew install openjdk@$JAVA_VERSION
-  sudo ln -sfn "$(brew --prefix)"/opt/openjdk@17/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-17.jdk
+  sudo ln -sfn "$(brew --prefix)"/opt/openjdk@25/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-25.jdk
   logOkMessage "Java installation complete."
 }
 
@@ -130,7 +130,7 @@ verifyJavaVersion() {
   logMessage "Verifying Java"
   echo "Checking Java version is correct..."
   current_java_version=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2 | xargs)
-  required_java_version='17'
+  required_java_version='25'
 
   if [[ $current_java_version == $required_java_version* ]]; then
     logOkMessage "Current Java version: "$current_java_version

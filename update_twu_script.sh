@@ -7,15 +7,12 @@ trap 'echo "[ERROR] Something went wrong!! Please check output above!!" >&2' ERR
 # Check if the script is being piped
 if [ -t 0 ]; then
   echo "This script should be run using curl:"
-  echo "curl -sSL https://raw.githubusercontent.com/thoughtworks-twu/setup-script/main/update_twu_script.sh | sh -s -- -dev"
+  echo "curl -sSL https://raw.githubusercontent.com/thoughtworks-twu/setup-script/main/update_twu_script.sh | sh"
   exit 1
 fi
 
 JAVA_VERSION=17
 NODE_VERSION=22
-CERT_FILE_NAME=letsencrypt-stg-root-x1.pem
-CERT_FILE_FOLDER=~/.local/share/certs
-CERT_FILE_LOCATION=$CERT_FILE_FOLDER/$CERT_FILE_NAME
 wereErrors=false
 
 installHomebrew() {
@@ -67,45 +64,6 @@ installDockerCLIandCompose() {
   logMessage "Installing Docker CLI and Compose tools..."
   brew install docker docker-compose
   logOkMessage "Docker CLI and Compose tools installation complete."
-}
-
-saveStagingCert() {
-  logMessage "Saving Let's Encrypt staging certificate to the system..."
-
-  # Create temporary directory for certificate
-  TEMP_CERT_DIR=$(mktemp -d)
-  TEMP_CERT_FILE="$TEMP_CERT_DIR/$CERT_FILE_NAME"
-
-  # Download the certificate to temporary location
-  curl https://letsencrypt.org/certs/staging/$CERT_FILE_NAME --output "$TEMP_CERT_FILE"
-
-  # Add to system keychain - this requires sudo
-  echo "Adding certificate to system keychain. You may be prompted for your password..."
-  sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain "$TEMP_CERT_FILE"
-
-  # Clean up temporary files
-  rm -rf "$TEMP_CERT_DIR"
-
-  logOkMessage "Staging certificate installation complete."
-}
-
-removeStagingCert() {
-  logMessage "Removing Let's Encrypt staging certificate from ${CERT_FILE_LOCATION}..."
-
-  if [ ! -f $CERT_FILE_LOCATION ]; then
-    # Create the $CERT_FILE_FOLDER if it doesn't exist
-    if [ ! -d $CERT_FILE_FOLDER ]; then
-      mkdir -p $CERT_FILE_FOLDER
-    fi
-    # Create the $CERT_FILE_LOCATION if it doesn't exist
-    touch $CERT_FILE_LOCATION
-    curl https://letsencrypt.org/certs/staging/$CERT_FILE_NAME --output $CERT_FILE_LOCATION
-  fi
-
-  security remove-trusted-cert -d $CERT_FILE_LOCATION
-  security delete-certificate -c '(STAGING) Pretend Pear X1' ~/Library/Keychains/login.keychain-db
-  rm $CERT_FILE_LOCATION
-  logOkMessage "Staging certificate removal complete."
 }
 
 logMessage() {
@@ -210,32 +168,12 @@ verifyColima() {
 
 logMessage "TWU Setup Script"
 
-case $1 in
-"")
-  saveStagingCert
+installHomebrew && installGit && installJava && installNode && installDockerCLIandCompose && installColima
+verifyJavaVersion && verifyNodeVersion && verifyGit && verifyDockerCLI && verifyDockerCompose && verifyColima
+
+if $wereErrors == true; then
+  logError "Looks like we encountered a problem :( \n\nPlease reach out to your friendly super trainers for support and include a screenshot of your terminal output when you do :D"
+else
   logMessage "Complete!"
-  logOkMessage "Setup script complete"
-  ;;
-
-"-dev")
-  saveStagingCert && installHomebrew && installGit && installJava && installNode && installDockerCLIandCompose && installColima
-  verifyJavaVersion && verifyNodeVersion && verifyGit && verifyDockerCLI && verifyDockerCompose && verifyColima
-
-  if $wereErrors == true; then
-    logError "Looks like we encountered a problem :( \n\nPlease reach out to your friendly super trainers for support and include a screenshot of your terminal output when you do :D"
-  else
-    logMessage "Complete!"
-    logOkMessage "All TWU dependencies installed!\n\nPlease restart your terminal to finish setup."
-  fi
-  ;;
-
-"-offboard")
-  removeStagingCert
-  logMessage "Complete!"
-  logOkMessage "Offboarding script complete"
-  ;;
-
-*)
-  logError "Unknown option '$1'"
-  ;;
-esac
+  logOkMessage "All TWU dependencies installed!\n\nPlease restart your terminal to finish setup."
+fi

@@ -5,9 +5,6 @@ trap 'logError "Something went wrong!! Please check output above!!"' ERR
 
 JAVA_VERSION=17
 NODE_VERSION=22
-CERT_FILE_NAME=letsencrypt-stg-root-x1.pem
-CERT_FILE_FOLDER=/usr/local/var
-CERT_FILE_LOCATION=$CERT_FILE_FOLDER/$CERT_FILE_NAME
 wereErrors=false
 
 installHomebrew() {
@@ -60,39 +57,6 @@ installDockerCLIandCompose() {
   logMessage "Installing Docker CLI and Compose tools..."
   brew install docker docker-compose
   logOkMessage "Docker CLI and Compose tools installation complete."
-}
-
-saveStagingCert() {
-  logMessage "Saving Let's Encrypt staging certificate to ${CERT_FILE_LOCATION}...\nYou may be prompted for your password"
-
-  if [ ! -d $CERT_FILE_FOLDER ]; then
-    sudo mkdir -p $CERT_FILE_FOLDER
-  fi
-  sudo chown -R $(whoami):admin $CERT_FILE_FOLDER
-  sudo chmod 775 $CERT_FILE_FOLDER
-
-  curl https://letsencrypt.org/certs/staging/$CERT_FILE_NAME --output $CERT_FILE_LOCATION
-  sudo security add-trusted-cert -d -p ssl -r trustRoot -k /Library/Keychains/System.keychain $CERT_FILE_LOCATION
-  logOkMessage "Staging certificate installation complete."
-}
-
-removeStagingCert() {
-  logMessage "Removing Let's Encrypt staging certificate from ${CERT_FILE_LOCATION}...\nYou may be prompted for your password"
-
-  if [ ! -f $CERT_FILE_LOCATION ]; then
-    # Create the $CERT_FILE_FOLDER if it doesn't exist
-    if [ ! -d $CERT_FILE_FOLDER ]; then
-      mkdir -p $CERT_FILE_FOLDER
-    fi
-    # Create the $CERT_FILE_LOCATION if it doesn't exist
-    touch $CERT_FILE_LOCATION
-    curl https://letsencrypt.org/certs/staging/$CERT_FILE_NAME --output $CERT_FILE_LOCATION
-  fi
-
-  sudo security remove-trusted-cert -d $CERT_FILE_LOCATION
-  sudo security delete-certificate -c '(STAGING) Pretend Pear X1' /Library/Keychains/System.keychain
-  rm $CERT_FILE_LOCATION
-  logOkMessage "Staging certificate removal complete."
 }
 
 logMessage() {
@@ -197,32 +161,12 @@ verifyColima() {
 
 logMessage "TWU Setup Script"
 
-case $1 in
-"")
-  saveStagingCert
+installHomebrew && installGit && installJava && installNode && installDockerCLIandCompose && installColima
+verifyJavaVersion && verifyNodeVersion && verifyGit && verifyDockerCLI && verifyDockerCompose && verifyColima
+
+if $wereErrors == true; then
+  logError "Looks like we encountered a problem :( \n\nPlease reach out to your friendly super trainers for support and include a screenshot of your terminal output when you do :D"
+else
   logMessage "Complete!"
-  logOkMessage "Setup script complete"
-  ;;
-
-"-dev")
-  saveStagingCert && installHomebrew && installGit && installJava && installNode && installDockerCLIandCompose && installColima
-  verifyJavaVersion && verifyNodeVersion && verifyGit && verifyDockerCLI && verifyDockerCompose && verifyColima
-
-  if $wereErrors == true; then
-    logError "Looks like we encountered a problem :( \n\nPlease reach out to your friendly super trainers for support and include a screenshot of your terminal output when you do :D"
-  else
-    logMessage "Complete!"
-    logOkMessage "All TWU dependencies installed!\n\nPlease restart your terminal to finish setup."
-  fi
-  ;;
-
-"-offboard")
-  removeStagingCert
-  logMessage "Complete!"
-  logOkMessage "Offboarding script complete"
-  ;;
-
-*)
-  logError "Unknown option '$1'"
-  ;;
-esac
+  logOkMessage "All TWU dependencies installed!\n\nPlease restart your terminal to finish setup."
+fi
